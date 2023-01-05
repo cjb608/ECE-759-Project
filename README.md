@@ -1,92 +1,76 @@
-# repo759
+# Image Inpainting
+
+## Introduction
+
+This notebook contains a base C++ implementation and an optimized C++ implementation of the image inpainting algorithm proposed by Bertalmío et al. in "Image Inpainting" [1]. The base implementation processes each pixel sequentially on the CPU where as the optimized implementation processes the pixels in parallel on the GPU.
+
+## Base Implementation
+
+The code for the CPU/serial implementation is located in the serial_inpainting sub-directory. The code can be run on either a local machine or euler. If running on euler an example slurm script has also been included. Test data has also been provided in the test_images sub-directory and an explanation of what is include in the test data can be found below.
+
+In order to compile the code please use the following command:
+g++ csv_functions.cpp serial_inpainting_functions.cpp serial_inpainting.cpp serial_inpainting_main.cpp -Wall -O3 -std=c++17 -o serial_inpainting
+
+After compiling in order to run the code please use the following command:
+./serial_inpainting test_image_data.csv test_output_data.csv test_mask_data.csv dt epsilon iterations iterations_of_diff diff_every_n_iterations
+
+•	test_image_data.csv is the csv file containing the test image data that can be downloaded from the test_images sub-directory
+•	test_output_data.csv is the name of the file that will be created to store the final inpainted image data
+•	test_mask_data.csv is the csv file containing the mask data (which pixels to inpaint) that can be downloaded from test_images sub-directory
+•	dt is the rate of change for the inpainting updates (default=0.1)
+•	epsilon is a small value used to avoid division by zero (default=1e-10)
+•	iterations is the total number of iterations of inpainting to run (input/mask dependent)
+•	iterations_of_diff is the number of iterations of anisotropic diffusion to run
+•	diff_every_n_iterations is how often to perform anisotropic diffusion
+
+## Optimized Implementation
+
+The code for the GPU/parallel implementation is located in the parallel_inpainting sub-directory. The code can be run on either a local machine with an NVIDIA GPU or euler. If running on euler an example slurm script has also been included. Test data has also been provided in the test_images sub-directory and an explanation of what is include in the test data can be found below.
+
+In order to compile the code please use the following command:
+nvcc csv_functions.cu parallel_inpainting_functions.cu parallel_inpainting.cu parallel_inpainting_main.cu -Xcompiler -O3 -Xcompiler -Wall -Xptxas -O3 -std c++17 -o parallel_inpainting
+
+After compiling in order to run the code please use the following command:
+./parallel_inpainting test_image_data.csv test_output_data.csv test_mask_data.csv dt epsilon iterations iterations_of_diff diff_every_n_iterations
+
+•	test_image_data.csv is the csv file containing the test image data that can be downloaded from the test_images sub-directory
+•	test_output_data.csv is the name of the file that will be created to store the final inpainted image data
+•	test_mask_data.csv is the csv file containing the mask data (which pixels to inpaint) that can be downloaded from test_images sub-directory
+•	dt is the rate of change for the inpainting updates (default=0.1)
+•	epsilon is a small value used to avoid division by zero (default=1e-10)
+•	iterations is the total number of iterations of inpainting to run (input/mask dependent)
+•	iterations_of_diff is the number of iterations of anisotropic diffusion to run
+•	diff_every_n_iterations is how often to perform anisotropic diffusion
 
 
+## Test Data
 
-## Getting started
+Test data has been included in the test_images sub-directory of the GitLab repo linked in the abstract. The test data includes seven different test cases. Each test case includes the input image as a png, the input image data as a csv, the input mask as a png, and the input mask data as a csv. The png files are provided for visuals only, the codebase uses the csv files as inputs.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+The corresponding files for each test case are as files:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+1.	test_image_64.png, test_image_data_64.csv, test_mask_64.png, test_mask_data_64.csv
+2.	test_image_128.png, test_image_data_128.csv, test_mask_128.png, test_mask_data_128.csv
+3.	test_image_256.png, test_image_data_256.csv, test_mask_256.png, test_mask_data_256.csv
+4.	test_image_512.png, test_image_data_512.csv, test_mask_512.png, test_mask_data_512.csv
+5.	test_image_1024.png, test_image_data_1024.csv, test_mask_1024.png, test_mask_data_1024.csv
+6.	test_synthetic_image.png, test_synthetic_image_data.png, test_synthetic_mask.png, test_synthetic_mask_data.csv
+7.	test_color_image.png, test_color_image_data_channel1.csv, test_color_image_data_channel2.csv, test_color_image_data_channel3.csv, test_color_mask.png, test_color_mask_data.csv
 
-## Add your files
+The seventh test case includes a color image, each RGB channel has been separated into its own csv file as the algorithm currently only takes single channel inputs.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## Results
 
-```
-cd existing_repo
-git remote add origin https://git.doit.wisc.edu/CBOEDER/repo759.git
-git branch -M main
-git push -uf origin main
-```
+A scaling analysis that compares the base implementation against the optimized implemenation using the first five test cases can be seen below.
 
-## Integrate with your tools
+| Image Size | Number of Inpainted Pixels | Serial Average Iteration Time (ms) | Parallel Average Iteration Time (ms) |
+| ---------- | -------------------------- | ---------------------------------- | ------------------------------------ |
+| 64x64      | 384                        | 0.407557                           | 0.182746                             |
+| 128x128    | 1536                       | 1.700380                           | 0.385397                             |
+| 256x256    | 6144                       | 7.820990                           | 1.1108                               |
+| 512x512    | 24576                      | 29.094200                          | 4.085500                             |
+| 1024x1024  | 98304                      | 152.935000                         | 11.751200                            |
 
-- [ ] [Set up project integrations](https://git.doit.wisc.edu/CBOEDER/repo759/-/settings/integrations)
+## References
 
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+[1] Bertalmío, Marcelo & Sapiro, Guillermo & Caselles, Vicent & Ballester, C.. (2000). Image inpainting. Proceedings of the ACM SIGGRAPH Conference on Computer Graphics. 417-424.
